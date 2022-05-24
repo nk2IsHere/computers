@@ -1,5 +1,7 @@
 namespace Computers.Types
 
+open Computers.Cascade
+
 type BigCraftable =
     {
         GameId: int

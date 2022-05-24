@@ -19,7 +19,7 @@ type Texture =
     | LoadedTexture of LoadedTexture
     
 module Texture =
-    let LoadTexture (helper: IModHelper) (texture: Texture) =
+    let Load (helper: IModHelper) (texture: Texture) =
         match texture with
         | UnloadedTexture({ name = name }) -> helper.ModContent.Load<Texture2D>($"assets/{name}.png")
         | LoadedTexture({ name = _; cache = cache }) -> cache

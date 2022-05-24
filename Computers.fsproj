@@ -15,13 +15,16 @@
   </PropertyGroup>
   
   <ItemGroup>
+    <Compile Include="Utils\Map.fs" />
+    <Compile Include="Cascade\Packable.fs" />
     <Compile Include="ModEntry.fs" />
     <Content Include="manifest.json" />
-    <Compile Include="Types\Packable.fs" />
-    <Compile Include="Types\Texture.fs" />
-    <Compile Include="Types\CraftingRecipe.fs" />
-    <Compile Include="Types\BigCraftable.fs" />
     <Content Include="assets\computer.png" />
+    <Compile Include="Game\GameDictionary.fs" />
+    <Compile Include="Game\Texture.fs" />
+    <Compile Include="Game\CraftingRecipe.fs" />
+    <Compile Include="Game\BigCraftable.fs" />
+    <Compile Include="Game\LatestId.fs" />
   </ItemGroup>
 
   <ItemGroup>

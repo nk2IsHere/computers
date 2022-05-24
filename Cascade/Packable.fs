@@ -1,4 +1,4 @@
-namespace Computers.Types
+namespace Computers.Cascade
 
 type PackableValue =
     | IntPackableValue of int

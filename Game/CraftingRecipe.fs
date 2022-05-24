@@ -1,5 +1,7 @@
 namespace Computers.Types
 
+open Computers.Cascade
+
 type CraftingLocation =
     | HomeCraftingLocation
     | FieldCraftingLocation
