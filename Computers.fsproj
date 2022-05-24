@@ -17,6 +17,11 @@
   <ItemGroup>
     <Compile Include="ModEntry.fs" />
     <Content Include="manifest.json" />
+    <Compile Include="Types\Packable.fs" />
+    <Compile Include="Types\Texture.fs" />
+    <Compile Include="Types\CraftingRecipe.fs" />
+    <Compile Include="Types\BigCraftable.fs" />
+    <Content Include="assets\computer.png" />
   </ItemGroup>
 
   <ItemGroup>
@@ -30,13 +35,6 @@
       <InputAssemblies Include="@(ReferencePathWithRefAssemblies)" Condition="'%(filename)' == 'FSharp.Core'" />
     </ItemGroup>
 
-    <ILRepack 
-            AllowDuplicateResources="false"
-            DebugInfo="true" 
-            Internalize="true" 
-            InputAssemblies="@(InputAssemblies)"
-            OutputFile="$(TargetPath)"
-            Parallel="true"
-            TargetKind="SameAsPrimaryAssembly" />
+    <ILRepack AllowDuplicateResources="false" DebugInfo="true" Internalize="true" InputAssemblies="@(InputAssemblies)" OutputFile="$(TargetPath)" Parallel="true" TargetKind="SameAsPrimaryAssembly" />
   </Target>
 </Project>
