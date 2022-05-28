@@ -16,7 +16,6 @@
   
   <ItemGroup>
     <Compile Include="Utils\Map.fs" />
-    <Compile Include="Cascade\Packable.fs" />
     <Compile Include="ModEntry.fs" />
     <Content Include="manifest.json" />
     <Content Include="assets\computer.png" />
@@ -24,7 +23,8 @@
     <Compile Include="Game\Texture.fs" />
     <Compile Include="Game\CraftingRecipe.fs" />
     <Compile Include="Game\BigCraftable.fs" />
-    <Compile Include="Game\LatestId.fs" />
+    <Compile Include="Cascade\Store.fs" />
+    <Compile Include="Cascade\Packable.fs" />
   </ItemGroup>
 
   <ItemGroup>

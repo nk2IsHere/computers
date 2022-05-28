@@ -21,5 +21,5 @@ module Packable =
         
     let Pack (replacementStorage: PlaceholderReplacementStorage) (packable: Packable): string =
         packable
-            |> List.map (PackValue replacementStorage)
-            |> List.fold (fun acc value -> $"{acc}/{value}") ""
+        |> List.map (PackValue replacementStorage)
+        |> List.fold (fun acc value -> $"{acc}/{value}") ""

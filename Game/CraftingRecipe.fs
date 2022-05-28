@@ -46,9 +46,11 @@ module CraftingRecipe =
     
     let ToPackable (craftingRecipe: CraftingRecipe): Packable =
         [
-            StringPackableValue (craftingRecipe.Recipe
+            StringPackableValue (
+                craftingRecipe.Recipe
                 |> Map.fold (fun acc k v -> acc @ [$"{k} {v}"]) []
-                |> String.concat " ")
+                |> String.concat " "
+            )
             ToPackableCraftingLocation craftingRecipe.Location
             ToPackableOutput craftingRecipe.Output
             BoolStringPackableValue craftingRecipe.IsBigCraftable
