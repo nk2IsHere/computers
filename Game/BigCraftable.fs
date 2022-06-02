@@ -1,10 +1,12 @@
 namespace Computers.Types
 
 open Computers.Cascade
+open Microsoft.Xna.Framework.Graphics
 
 type BigCraftable =
     {
         GameId: int
+        Texture: Texture2D
         Name: string
         Price: int
         Edibility: int
@@ -15,19 +17,16 @@ type BigCraftable =
         Fragility: int
         IsLamp: bool
         DisplayName: string
-        Texture: Texture
     }
 
 module BigCraftable =
     let ToPackable (bigCraftable: BigCraftable): Packable =
         [
-            IntPackableValue bigCraftable.GameId
             StringPackableValue bigCraftable.Name
             IntPackableValue bigCraftable.Price
             IntPackableValue bigCraftable.Edibility
             StringPackableValue bigCraftable.Type
             StringPackableValue bigCraftable.Description
-            IntPackableValue bigCraftable.Edibility
             BoolStringPackableValue bigCraftable.AllowOutdoorsPlacement
             BoolStringPackableValue bigCraftable.AllowIndoorsPlacement
             IntPackableValue bigCraftable.Fragility

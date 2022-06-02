@@ -9,17 +9,21 @@ type PackableValue =
     | PlaceholderPackableValue of string
 
 type PlaceholderReplacementStorage = Map<string, PackableValue>
-type Packable = List<PackableValue>
+
+module PackableValue =
+        let rec Pack (replacementStorage: PlaceholderReplacementStorage) (packableValue: PackableValue): string =
+            match packableValue with
+            | BoolNumberPackableValue(value) -> if value then "1" else "0"
+            | BoolStringPackableValue(value) -> if value then "true" else "false"
+            | PlaceholderPackableValue(key) -> Pack replacementStorage (replacementStorage |> Map.find key)
+            | IntPackableValue(value) -> string value
+            | DecimalPackableValue(value) -> string value
+            | StringPackableValue(value) -> string value
+
+type Packable = PackableValue list
 
 module Packable =
-    let rec PackValue (replacementStorage: PlaceholderReplacementStorage) (packableValue: PackableValue): string =
-        match packableValue with
-        | BoolNumberPackableValue(value) -> if value then "1" else "0"
-        | BoolStringPackableValue(value) -> if value then "true" else "false"
-        | PlaceholderPackableValue(key) -> PackValue replacementStorage (replacementStorage |> Map.find key)
-        | _ -> string packableValue
-        
     let Pack (replacementStorage: PlaceholderReplacementStorage) (packable: Packable): string =
         packable
-        |> List.map (PackValue replacementStorage)
-        |> List.fold (fun acc value -> $"{acc}/{value}") ""
+        |> List.map (PackableValue.Pack replacementStorage)
+        |> String.concat "/"

@@ -7,12 +7,26 @@ type CraftingLocation =
     | FieldCraftingLocation
 
 type CraftingSkill =
-    | NoneCraftingSkill
     | ForagingCraftingSkill
     | FarmingCraftingSkill
     | FishingCraftingSkill
     | MiningCraftingSkill
     | CombatCraftingSkill
+
+module CraftingSkill =
+    let StringValue (craftingSkill: CraftingSkill): string =
+        match craftingSkill with
+        | ForagingCraftingSkill -> "Foraging"
+        | FarmingCraftingSkill -> "Farming"
+        | FishingCraftingSkill -> "Fishing"
+        | MiningCraftingSkill -> "Mining"
+        | CombatCraftingSkill -> "Combat"
+
+type CraftingRequiredCondition =
+    | FriendshipCraftingRequiredCondition of (string * int)
+    | LevelCraftingRequiredCondition of (int)
+    | SkillCraftingRequiredCondition of (CraftingSkill * int)
+    | NoneCraftingRequiredCondition
 
 type CraftingOutput =
     | PlaceholderCraftingOutput of string
@@ -20,11 +34,12 @@ type CraftingOutput =
 
 type CraftingRecipe =
     {
+        Name: string
         Recipe: Map<int, int>
         Location: CraftingLocation
         Output: CraftingOutput
         IsBigCraftable: bool
-        RequiredSkill: Option<CraftingSkill * int>
+        RequiredCondition: CraftingRequiredCondition
         DisplayName: string
     }
 
@@ -39,10 +54,12 @@ module CraftingRecipe =
         | ValueCraftingOutput(outputGameId, outputCount) -> StringPackableValue $"{outputGameId} {outputCount}"
         | PlaceholderCraftingOutput(key) -> PlaceholderPackableValue key
     
-    let ToPackableRequiredSkill (requiredSkill: Option<CraftingSkill * int>): PackableValue =
-        match requiredSkill with
-        | Some(skillType, skillLevel) -> StringPackableValue $"{skillType} {skillLevel}"
-        | None -> StringPackableValue "null"
+    let ToPackableRequiredCondition (requiredCondition: CraftingRequiredCondition): PackableValue =
+        match requiredCondition with
+        | FriendshipCraftingRequiredCondition(npcName, heartsLevel) -> StringPackableValue $"f {npcName} {heartsLevel}"
+        | LevelCraftingRequiredCondition(level) -> StringPackableValue $"l {level}"
+        | SkillCraftingRequiredCondition(craftingSkill, level) -> StringPackableValue $"s {craftingSkill |> CraftingSkill.StringValue} {level}"
+        | NoneCraftingRequiredCondition -> StringPackableValue "none"
     
     let ToPackable (craftingRecipe: CraftingRecipe): Packable =
         [
@@ -54,6 +71,6 @@ module CraftingRecipe =
             ToPackableCraftingLocation craftingRecipe.Location
             ToPackableOutput craftingRecipe.Output
             BoolStringPackableValue craftingRecipe.IsBigCraftable
-            ToPackableRequiredSkill craftingRecipe.RequiredSkill
+            ToPackableRequiredCondition craftingRecipe.RequiredCondition
             StringPackableValue craftingRecipe.DisplayName
         ]

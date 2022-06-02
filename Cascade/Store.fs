@@ -6,11 +6,11 @@ type Dispatcher<'a> = 'a -> 'a
 
 type IStore<'s, 'a> =
     abstract member CurrentState: 's
-    abstract member Dispatch: Dispatcher<'a>
+    abstract member Dispatch: ('a -> 's)
 
 type Middleware<'s, 'a> = IStore<'s, 'a> -> Dispatcher<'a> -> Dispatcher<'a>
 
-type Store<'s, 'a>(reducers: List<Reducer<'s, 'a>>, middlewares: List<Middleware<'s, 'a>>, initialState: 's) =
+type Store<'s, 'a>(reducers: Reducer<'s, 'a> list, middlewares: Middleware<'s, 'a> list, initialState: 's) =
     let mutable state = initialState
     
     let reducer: Reducer<'s, 'a> =
@@ -32,8 +32,6 @@ type Store<'s, 'a>(reducers: List<Reducer<'s, 'a>>, middlewares: List<Middleware
             state
         
         member this.Dispatch =
-            this.dispatcher
-
-module Store =
-    let store<'s, 'a> (reducers: List<Reducer<'s, 'a>>) (middlewares: List<Middleware<'s, 'a>>) (initialState: 's): Store<'s, 'a> =
-        new Store<'s, 'a>(reducers, middlewares, initialState)
+            fun action ->
+                this.dispatcher action |> ignore
+                state
