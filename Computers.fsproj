@@ -16,6 +16,8 @@
   
   <ItemGroup>
     <Compile Include="Utils\Map.fs" />
+    <Compile Include="Utils\List.fs" />
+    <Compile Include="Utils\Option.fs" />
     <Compile Include="Cascade\Store.fs" />
     <Compile Include="Cascade\Packable.fs" />
     <Compile Include="Game\CraftingRecipe.fs" />

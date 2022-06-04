@@ -5,8 +5,8 @@ open Microsoft.Xna.Framework.Graphics
 
 type BigCraftable =
     {
-        GameId: int
-        Texture: Texture2D
+        GameId: int option
+        Texture: Texture2D option
         Name: string
         Price: int
         Edibility: int
