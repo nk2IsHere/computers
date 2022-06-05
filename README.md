@@ -1,5 +1,7 @@
 # Computers
 
+Programmable computers for Stardew Valley
+
 ## Goals.
 
 ### Generally:
