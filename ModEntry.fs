@@ -3,6 +3,7 @@
 open System
 open System.Collections.Generic
 open Computers.Cascade
+open HarmonyLib
 open Microsoft.Xna.Framework
 open Microsoft.Xna.Framework.Graphics
 open StardewModdingAPI
@@ -215,3 +216,7 @@ type public ModEntry() =
             .GameContent
             .Load<Dictionary<int, string>>("Data/BigCraftablesInformation")
             |> ignore
+        
+        let harmony = Harmony(this.ModManifest.UniqueID)
+        
+        harmony.
