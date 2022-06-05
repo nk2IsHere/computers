@@ -43,7 +43,7 @@ Make processing of Stardew's resources a configurable fun pipelike-like process 
 
 ### Basic POC of computer in-game
 
-- [ ] Make computer bigcraftable interactable on use action
+- [x] Make computer bigcraftable interactable on use action
 - [ ] Make computer interaction display centered window
 - [ ] Make displayed window render custom graphics
 - [ ] Add support for interpretable language in-library

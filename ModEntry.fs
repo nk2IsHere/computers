@@ -182,6 +182,15 @@ type public ModEntry() =
                         
             )
         ]
+        
+    member this.interactor: Map<string, StardewValley.Object -> unit> =
+        Map [
+            (
+                "Computer",
+                fun object ->
+                    do this.Monitor.Log $"Clicked on {object}"
+            )
+        ]
     
     override this.Entry (helper: IModHelper) =
         do dataStore.Value <- {
@@ -210,13 +219,29 @@ type public ModEntry() =
                             args.Edit(fun asset -> patcher asset)
                     )
             )
+            
+        do helper
+            .Events.Input.ButtonPressed
+            .AddHandler (
+                fun (_: _) (args: ButtonPressedEventArgs) ->
+                    let shouldHandleInteraction = Context.IsPlayerFree &&
+                        (args.Button.IsActionButton() || Constants.TargetPlatform = GamePlatform.Android) &&
+                        StardewValley.Game1.currentLocation.objects.ContainsKey(args.Cursor.Tile) &&
+                        args.Cursor.Tile.Equals(args.Cursor.GrabTile)
+                    
+                    do if shouldHandleInteraction then (
+                        let currentSelectedObject = StardewValley.Game1.currentLocation.objects[args.Cursor.Tile]
+                        this.interactor
+                        |> Map.tryFind currentSelectedObject.Name
+                        |> Option.iter (
+                            fun object ->
+                                object currentSelectedObject   
+                        )
+                    )
+            )
         
         // Enforce loading Data/BigCraftablesInformation before TileSheets/Craftables
         do helper
             .GameContent
             .Load<Dictionary<int, string>>("Data/BigCraftablesInformation")
             |> ignore
-        
-        let harmony = Harmony(this.ModManifest.UniqueID)
-        
-        harmony.
