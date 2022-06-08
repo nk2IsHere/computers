@@ -188,7 +188,7 @@ type public ModEntry() =
             (
                 "Computer",
                 fun object ->
-                    do this.Monitor.Log $"Clicked on {object}"
+                    do StardewValley.Game1.activeClickableMenu <- ComputerWindow(600, 400)
             )
         ]
     

@@ -45,7 +45,11 @@ Make processing of Stardew's resources a configurable fun pipelike-like process 
 
 - [x] Make computer bigcraftable interactable on use action
 - [ ] Make computer interaction display centered window
-- [ ] Make displayed window render custom graphics
+  - [x] Make drawable window
+  - [ ] Make an abstraction over stardew's code
+  - [ ] Make a set of custom draw primitives commands
+  - [ ] Make draw stack with merging last drawn image to one
+  - [ ] Make displayed window render custom graphics in batch using commands
 - [ ] Add support for interpretable language in-library
 - [ ] Add VMs (sandboxes) for each computer instance in world
 - [ ] Add save state mechanism for computers, make them movable and attach id tag for any obtained computer
