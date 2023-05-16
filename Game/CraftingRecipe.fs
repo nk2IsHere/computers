@@ -1,4 +1,4 @@
-namespace Computers.Types
+namespace Computers.Game
 
 open Computers.Cascade
 

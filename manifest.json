@@ -5,5 +5,5 @@
   "Description": "Programmable computers for Stardew Valley",
   "UniqueID": "eu.nk2.computers",
   "EntryDll": "Computers.dll",
-  "MinimumApiVersion": "3.14.0"
+  "MinimumApiVersion": "3.18.0"
 }

@@ -3,12 +3,11 @@
 open System
 open System.Collections.Generic
 open Computers.Cascade
-open HarmonyLib
 open Microsoft.Xna.Framework
 open Microsoft.Xna.Framework.Graphics
 open StardewModdingAPI
 open StardewModdingAPI.Events
-open Computers.Types
+open Computers.Game
 open Computers.Utils
 
 type DataState =
@@ -29,7 +28,7 @@ type public ModEntry() =
     
     let dataStore: Store<DataState, DataAction> ref =
         ref {
-            reducers = [
+            Reducers = [
                 fun state action ->
                     match action with
                     | UpdateBigCraftableIdsDataAction(originalData) ->
@@ -73,10 +72,10 @@ type public ModEntry() =
                             )
                         }
             ]
-            middlewares = [
-                Store.logger "dataStore" (fun log -> printf $"{log}")
+            Middlewares = [
+                Store.Logger "dataStore" (fun log -> printf $"{log}")
             ]
-            state = {
+            State = {
                 bigCraftableStorage = [
                     {
                        GameId = None
@@ -115,10 +114,10 @@ type public ModEntry() =
                     let bigCraftableGameData = asset.AsDictionary<int, string>().Data
                     do dataStore.Value <- {
                         dataStore.Value
-                        with state = dataStore.Value.Dispatch (UpdateBigCraftableIdsDataAction(bigCraftableGameData))
+                        with State = dataStore.Value.Dispatch (UpdateBigCraftableIdsDataAction(bigCraftableGameData))
                     }
                     
-                    for bigCraftable in dataStore.Value.state.bigCraftableStorage do
+                    for bigCraftable in dataStore.Value.State.bigCraftableStorage do
                         do this.Monitor.Log $"Add BigCraftable {bigCraftable.Name}"
                         bigCraftableGameData.Add(
                             bigCraftable.GameId
@@ -132,10 +131,10 @@ type public ModEntry() =
                 "Data/CraftingRecipes",
                 fun asset ->
                     let craftingRecipeGameData = asset.AsDictionary<string, string>().Data
-                    for craftingRecipe in dataStore.Value.state.craftingRecipeStorage do
+                    for craftingRecipe in dataStore.Value.State.craftingRecipeStorage do
                         do this.Monitor.Log $"Add CraftingRecipe {craftingRecipe.Name}"
                         let matchingBigCraftable = (
-                            dataStore.Value.state.bigCraftableStorage
+                            dataStore.Value.State.bigCraftableStorage
                             |> List.find (fun bigCraftable -> bigCraftable.Name = craftingRecipe.Name)
                         )
                         
@@ -165,7 +164,7 @@ type public ModEntry() =
                 fun asset ->
                     let craftableTileSheetGameData = asset.AsImage()
                     do craftableTileSheetGameData.ExtendImage(craftableTileSheetGameData.Data.Width, 4096) |> ignore
-                    for bigCraftable in dataStore.Value.state.bigCraftableStorage do
+                    for bigCraftable in dataStore.Value.State.bigCraftableStorage do
                         do this.Monitor.Log $"Add Texture for BigCraftable {bigCraftable.Name}"
                         let gameId = (
                             bigCraftable.GameId
@@ -188,14 +187,23 @@ type public ModEntry() =
             (
                 "Computer",
                 fun object ->
-                    do StardewValley.Game1.activeClickableMenu <- ComputerWindow(600, 400)
+                    do StardewValley.Game1.activeClickableMenu <- Window(
+                        {
+                            width = 600
+                            height = 400
+                        },
+                        [
+                            Window.DrawDialogueBoxCommand()
+                            Window.DrawMouseCommand()
+                        ]
+                    )
             )
         ]
     
     override this.Entry (helper: IModHelper) =
         do dataStore.Value <- {
             dataStore.Value
-            with state = dataStore.Value
+            with State = dataStore.Value
                 .Dispatch (UpdateBigCraftableTextureDataAction(
                     "Computer",
                     helper
@@ -214,20 +222,19 @@ type public ModEntry() =
                             if args.Name.IsEquivalentTo(name) then Some patcher
                             else None
                         )
-                    |> Option.iter (
-                        fun patcher ->
-                            args.Edit(fun asset -> patcher asset)
-                    )
+                    |> Option.iter args.Edit
             )
             
         do helper
             .Events.Input.ButtonPressed
             .AddHandler (
                 fun (_: _) (args: ButtonPressedEventArgs) ->
-                    let shouldHandleInteraction = Context.IsPlayerFree &&
-                        (args.Button.IsActionButton() || Constants.TargetPlatform = GamePlatform.Android) &&
-                        StardewValley.Game1.currentLocation.objects.ContainsKey(args.Cursor.Tile) &&
-                        args.Cursor.Tile.Equals(args.Cursor.GrabTile)
+                    let shouldHandleInteraction = (
+                        Context.IsPlayerFree
+                            && (args.Button.IsActionButton() || Constants.TargetPlatform = GamePlatform.Android)
+                            && StardewValley.Game1.currentLocation.objects.ContainsKey(args.Cursor.Tile)
+                            && args.Cursor.Tile.Equals(args.Cursor.GrabTile)
+                    )
                     
                     do if shouldHandleInteraction then (
                         let currentSelectedObject = StardewValley.Game1.currentLocation.objects[args.Cursor.Tile]

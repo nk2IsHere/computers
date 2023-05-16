@@ -22,16 +22,18 @@
     <Compile Include="Cascade\Packable.fs" />
     <Compile Include="Game\CraftingRecipe.fs" />
     <Compile Include="Game\BigCraftable.fs" />
-    <Compile Include="ComputerWindow.fs" />
+    <Compile Include="Game\Window.fs" />
     <Content Include="manifest.json" />
     <Content Include="assets\computer.png" />
     <Compile Include="ModEntry.fs" />
     <Content Include="README.md" />
+    <Folder Include="Mod" />
   </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="ILRepack.Lib.MSBuild" Version="2.1.18" />
-    <PackageReference Include="Pathoschild.Stardew.ModBuildConfig" Version="4.0.1" />
+    <PackageReference Include="Pathoschild.Stardew.ModBuildConfig" Version="4.1.0" />
+    <PackageReference Update="FSharp.Core" Version="7.0.300-beta.23261.1" />
   </ItemGroup>
 
   <Target Name="ILRepacker" BeforeTargets="AfterBuild">
