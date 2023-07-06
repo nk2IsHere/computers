@@ -20,20 +20,24 @@
     <Compile Include="Utils\Option.fs" />
     <Compile Include="Cascade\Store.fs" />
     <Compile Include="Cascade\Packable.fs" />
+    <Compile Include="Cascade\Registry.fs" />
+    <Compile Include="Cascade\Railway.fs" />
     <Compile Include="Game\CraftingRecipe.fs" />
     <Compile Include="Game\BigCraftable.fs" />
     <Compile Include="Game\Window.fs" />
+    <Compile Include="Mod\ContentStore.fs" />
+    <Compile Include="Mod\PatcherRegistry.fs" />
+    <Compile Include="Mod\InteractionRegistry.fs" />
     <Content Include="manifest.json" />
     <Content Include="assets\computer.png" />
     <Compile Include="ModEntry.fs" />
     <Content Include="README.md" />
-    <Folder Include="Mod" />
   </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="ILRepack.Lib.MSBuild" Version="2.1.18" />
-    <PackageReference Include="Pathoschild.Stardew.ModBuildConfig" Version="4.1.0" />
-    <PackageReference Update="FSharp.Core" Version="7.0.300-beta.23261.1" />
+    <PackageReference Include="Pathoschild.Stardew.ModBuildConfig" Version="4.1.1" />
+    <PackageReference Update="FSharp.Core" Version="7.0.300" />
   </ItemGroup>
 
   <Target Name="ILRepacker" BeforeTargets="AfterBuild">

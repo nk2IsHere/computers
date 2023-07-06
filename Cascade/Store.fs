@@ -31,7 +31,7 @@ type Store<'s, 'a> =
 
 
 module Store =
-    let Logger<'s, 'a> (tag: string) (outputSink: string -> unit): Middleware<'s, 'a> =
+    let LoggerMiddleware<'s, 'a> (tag: string) (outputSink: string -> unit): Middleware<'s, 'a> =
         fun state next action ->
             let newState = next action
             do outputSink $"[{tag}/{action}] {state} -> {newState}"
@@ -58,4 +58,21 @@ module Store =
             ]
             Middlewares = []
             State = (leftStore.State, rightStore.State)
+        }
+    
+    let Combine<'s, 'a> (combiner: 's -> 's -> 's) (stores: Store<'s, 'a> list): Store<'s, 'a> =
+        {
+            Reducers = (
+                stores
+                |> List.collect (fun store -> store.Reducers)
+            )
+            Middlewares = (
+                stores
+                |> List.collect (fun store -> store.Middlewares)
+            )
+            State = (
+                stores
+                |> List.map (fun store -> store.State)
+                |> List.reduce combiner
+            )
         }

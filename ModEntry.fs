@@ -1,81 +1,21 @@
 ﻿namespace Computers
 
-open System
 open System.Collections.Generic
 open Computers.Cascade
-open Microsoft.Xna.Framework
+open Computers.Game
 open Microsoft.Xna.Framework.Graphics
 open StardewModdingAPI
 open StardewModdingAPI.Events
-open Computers.Game
 open Computers.Utils
-
-type DataState =
-    {
-        bigCraftableStorage: BigCraftable list
-        craftingRecipeStorage: CraftingRecipe list
-    }
-    
-type UpdateBigCraftableIdsDataAction = IDictionary<int, string>
-type UpdateBigCraftableTextureDataAction = string * Texture2D
-    
-type DataAction =
-    | UpdateBigCraftableIdsDataAction of UpdateBigCraftableIdsDataAction
-    | UpdateBigCraftableTextureDataAction of UpdateBigCraftableTextureDataAction
+open Computers.Mod
 
 type public ModEntry() =
     inherit Mod()
     
-    let dataStore: Store<DataState, DataAction> ref =
-        ref {
-            Reducers = [
-                fun state action ->
-                    match action with
-                    | UpdateBigCraftableIdsDataAction(originalData) ->
-                        let bigCraftableLatestId = (
-                            originalData.Keys
-                            |> seq
-                            |> Seq.max
-                            |> (+) 1
-                        )
-                        {
-                            state
-                            with bigCraftableStorage = (
-                                state.bigCraftableStorage
-                                |> List.indexed
-                                |> List.map (
-                                    fun (index, bigCraftable) ->
-                                        {
-                                            bigCraftable
-                                            with GameId = Some (bigCraftableLatestId + index)
-                                        }
-                                )
-                            )
-                        }
-                    | UpdateBigCraftableTextureDataAction(name, texture) ->
-                        {
-                            state
-                            with bigCraftableStorage = (
-                                state.bigCraftableStorage
-                                |> List.replace
-                                       (
-                                           fun bigCraftable ->
-                                               bigCraftable.Name = name
-                                       )
-                                       (
-                                            fun bigCraftable ->
-                                                {
-                                                    bigCraftable
-                                                    with Texture = Some texture
-                                                }
-                                       )
-                            )
-                        }
-            ]
-            Middlewares = [
-                Store.Logger "dataStore" (fun log -> printf $"{log}")
-            ]
-            State = {
+    member this.contentStore: Store<ContentState, ContentAction> ref =
+        ref (Content.Store {
+            monitor = this.Monitor
+            state = {
                 bigCraftableStorage = [
                     {
                        GameId = None
@@ -95,7 +35,9 @@ type public ModEntry() =
                 craftingRecipeStorage = [
                     {
                        Name = "Computer"
-                       Recipe = Map [(380, 5)]
+                       Recipe = [
+                           ValueCraftingRecipeEntry (380, 5)
+                       ]
                        Location = CraftingLocation.HomeCraftingLocation
                        Output = CraftingOutput.PlaceholderCraftingOutput("ComputerCraftingRecipeOutput")
                        IsBigCraftable = true
@@ -104,107 +46,18 @@ type public ModEntry() =
                    }
                 ]
             }
-        }
+        })
     
-    member this.patcher: Map<string, IAssetData -> unit> =
-        Map [
-            (
-                "Data/BigCraftablesInformation",
-                fun asset ->
-                    let bigCraftableGameData = asset.AsDictionary<int, string>().Data
-                    do dataStore.Value <- {
-                        dataStore.Value
-                        with State = dataStore.Value.Dispatch (UpdateBigCraftableIdsDataAction(bigCraftableGameData))
-                    }
-                    
-                    for bigCraftable in dataStore.Value.State.bigCraftableStorage do
-                        do this.Monitor.Log $"Add BigCraftable {bigCraftable.Name}"
-                        bigCraftableGameData.Add(
-                            bigCraftable.GameId
-                            |> Option.unwrap "Should not happen, UpdateBigCraftableIdsDataAction must update ids of all BigCraftables",
-                            bigCraftable
-                            |> BigCraftable.ToPackable
-                            |> Packable.Pack (Map [])
-                        )
-            )
-            (
-                "Data/CraftingRecipes",
-                fun asset ->
-                    let craftingRecipeGameData = asset.AsDictionary<string, string>().Data
-                    for craftingRecipe in dataStore.Value.State.craftingRecipeStorage do
-                        do this.Monitor.Log $"Add CraftingRecipe {craftingRecipe.Name}"
-                        let matchingBigCraftable = (
-                            dataStore.Value.State.bigCraftableStorage
-                            |> List.find (fun bigCraftable -> bigCraftable.Name = craftingRecipe.Name)
-                        )
-                        
-                        craftingRecipeGameData.Add(
-                            craftingRecipe.Name,
-                            craftingRecipe
-                            |> CraftingRecipe.ToPackable
-                            |> Packable.Pack (Map [
-                                (
-                                    "ComputerCraftingRecipeOutput",
-                                    CompositePackableValue(
-                                        [
-                                            IntPackableValue(
-                                                matchingBigCraftable.GameId
-                                                |> Option.unwrap "Data/BigCraftablesInformation must be loaded before Data/CraftingRecipes"
-                                            )
-                                            IntPackableValue 1
-                                        ],
-                                        StringPackableValue " "
-                                    )
-                                )
-                            ])
-                        )
-            )
-            (
-                "TileSheets/Craftables",
-                fun asset ->
-                    let craftableTileSheetGameData = asset.AsImage()
-                    do craftableTileSheetGameData.ExtendImage(craftableTileSheetGameData.Data.Width, 4096) |> ignore
-                    for bigCraftable in dataStore.Value.State.bigCraftableStorage do
-                        do this.Monitor.Log $"Add Texture for BigCraftable {bigCraftable.Name}"
-                        let gameId = (
-                            bigCraftable.GameId
-                            |> Option.unwrap "Data/BigCraftablesInformation must be loaded before TileSheets/Craftables"
-                        )
-                        
-                        craftableTileSheetGameData.PatchImage(
-                             bigCraftable.Texture
-                             |> Option.unwrap $"Texture of {bigCraftable.Name} must be loaded before TileSheets/Craftables",
-                             Nullable(),
-                             Rectangle(gameId % 8 * 16, gameId / 8 * 32, 16, 32),
-                             PatchMode.Replace
-                        )
-                        
-            )
-        ]
+    member this.patcher = Patcher.Registry { monitor = this.Monitor }
         
-    member this.interactor: Map<string, StardewValley.Object -> unit> =
-        Map [
-            (
-                "Computer",
-                fun object ->
-                    do StardewValley.Game1.activeClickableMenu <- Window(
-                        {
-                            width = 600
-                            height = 400
-                        },
-                        [
-                            Window.DrawDialogueBoxCommand()
-                            Window.DrawMouseCommand()
-                        ]
-                    )
-            )
-        ]
+    member this.interactor = Interaction.Registry { monitor = this.Monitor }
+        
     
     override this.Entry (helper: IModHelper) =
-        do dataStore.Value <- {
-            dataStore.Value
-            with State = dataStore.Value
-                .Dispatch (UpdateBigCraftableTextureDataAction(
+        do this.contentStore.Value <- {
+            this.contentStore.Value
+            with State = this.contentStore.Value
+                .Dispatch (UpdateBigCraftableTextureContentAction(
                     "Computer",
                     helper
                         .ModContent
@@ -213,20 +66,23 @@ type public ModEntry() =
         }
         
         do helper
-            .Events.Content.AssetRequested
+            .Events
+            .Content
+            .AssetRequested
             .AddHandler (
                 fun (_: _) (args: AssetRequestedEventArgs) ->
                     this.patcher
-                    |> Map.tryPick (
-                        fun name patcher ->
-                            if args.Name.IsEquivalentTo(name) then Some patcher
-                            else None
-                        )
-                    |> Option.iter args.Edit
+                    |> Registry.Pick (fun name -> args.Name.IsEquivalentTo(name))
+                    |> Option.iter (
+                        fun patcher ->
+                            args.Edit (patcher this.contentStore.Value)
+                    )
             )
             
         do helper
-            .Events.Input.ButtonPressed
+            .Events
+            .Input
+            .ButtonPressed
             .AddHandler (
                 fun (_: _) (args: ButtonPressedEventArgs) ->
                     let shouldHandleInteraction = (
@@ -239,7 +95,7 @@ type public ModEntry() =
                     do if shouldHandleInteraction then (
                         let currentSelectedObject = StardewValley.Game1.currentLocation.objects[args.Cursor.Tile]
                         this.interactor
-                        |> Map.tryFind currentSelectedObject.Name
+                        |> Registry.Find currentSelectedObject.Name
                         |> Option.iter (
                             fun object ->
                                 object currentSelectedObject   
@@ -252,3 +108,4 @@ type public ModEntry() =
             .GameContent
             .Load<Dictionary<int, string>>("Data/BigCraftablesInformation")
             |> ignore
+        

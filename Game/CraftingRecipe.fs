@@ -24,7 +24,7 @@ module CraftingSkill =
 
 type CraftingRequiredCondition =
     | FriendshipCraftingRequiredCondition of (string * int)
-    | LevelCraftingRequiredCondition of (int)
+    | LevelCraftingRequiredCondition of int
     | SkillCraftingRequiredCondition of (CraftingSkill * int)
     | NoneCraftingRequiredCondition
 
@@ -32,10 +32,14 @@ type CraftingOutput =
     | PlaceholderCraftingOutput of string
     | ValueCraftingOutput of int * int
 
+type CraftingRecipeEntry =
+    | PlaceholderCraftingRecipeEntry of string * int
+    | ValueCraftingRecipeEntry of int * int
+
 type CraftingRecipe =
     {
         Name: string
-        Recipe: Map<int, int>
+        Recipe: CraftingRecipeEntry list
         Location: CraftingLocation
         Output: CraftingOutput
         IsBigCraftable: bool
@@ -60,13 +64,17 @@ module CraftingRecipe =
         | LevelCraftingRequiredCondition(level) -> StringPackableValue $"l {level}"
         | SkillCraftingRequiredCondition(craftingSkill, level) -> StringPackableValue $"s {craftingSkill |> CraftingSkill.StringValue} {level}"
         | NoneCraftingRequiredCondition -> StringPackableValue "none"
+        
+    let ToPackableRecipeEntry (recipeEntry: CraftingRecipeEntry): PackableValue =
+        match recipeEntry with
+        | PlaceholderCraftingRecipeEntry(key, count) -> CompositePackableValue ([PlaceholderPackableValue key; IntPackableValue count], StringPackableValue " ")
+        | ValueCraftingRecipeEntry(gameId, count) -> StringPackableValue $"{gameId} {count}"
     
     let ToPackable (craftingRecipe: CraftingRecipe): Packable =
         [
-            StringPackableValue (
-                craftingRecipe.Recipe
-                |> Map.fold (fun acc k v -> acc @ [$"{k} {v}"]) []
-                |> String.concat " "
+            CompositePackableValue (
+                craftingRecipe.Recipe |> List.map ToPackableRecipeEntry,
+                StringPackableValue " "
             )
             ToPackableCraftingLocation craftingRecipe.Location
             ToPackableOutput craftingRecipe.Output
