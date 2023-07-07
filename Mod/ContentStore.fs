@@ -12,61 +12,70 @@ type ContentState =
         craftingRecipeStorage: CraftingRecipe list
     }
     
-type UpdateBigCraftablesContentAction = BigCraftable list
+type UpdateBigCraftableIdsAction = (string * int option) list
 
 type UpdateBigCraftableTextureContentAction = string * Texture2D
     
 type ContentAction =
-    | UpdateBigCraftablesContentAction of UpdateBigCraftablesContentAction
+    | UpdateBigCraftableIdsAction of UpdateBigCraftableIdsAction
     | UpdateBigCraftableTextureContentAction of UpdateBigCraftableTextureContentAction
 
 type ContentContext =
     {
-        state: ContentState
         monitor: IMonitor
     }
 
 module private ContentInternal =
-    let UpdateBigCraftablesContentActionReducer: Reducer<ContentState, UpdateBigCraftablesContentAction> =
+    let UpdateBigCraftableIdsActionReducer: Reducer<ContentState, UpdateBigCraftableIdsAction> =
         fun state originalContent ->
             {
                 state
-                with bigCraftableStorage = originalContent
+                with bigCraftableStorage = (
+                    state.bigCraftableStorage
+                    |> List.map
+                       (
+                           fun bigCraftable ->
+                               originalContent
+                               |> List.tryFind (fun (name, _) -> name = bigCraftable.Name)
+                               |> Option.map (fun (_, gameId) -> { bigCraftable with GameId = gameId })
+                               |> Option.defaultValue bigCraftable
+                       )
+                )
             }
 
-    let UpdateBigCraftableTextureContentAction = 
+    let UpdateBigCraftableTextureContentActionReducer = 
         fun state (name, texture) ->
             {
                 state
                 with bigCraftableStorage = (
                     state.bigCraftableStorage
                     |> List.replace
-                           (
-                               fun bigCraftable ->
-                                   bigCraftable.Name = name
-                           )
-                           (
-                                fun bigCraftable ->
-                                    {
-                                        bigCraftable
-                                        with Texture = Some texture
-                                    }
-                           )
+                       (
+                           fun bigCraftable ->
+                               bigCraftable.Name = name
+                       )
+                       (
+                            fun bigCraftable ->
+                                {
+                                    bigCraftable
+                                    with Texture = Some texture
+                                }
+                       )
                 )
             }
 
 module Content =
-    let Store: ContentContext -> Store<ContentState, ContentAction> =
-        fun context ->
+    let Store: ContentContext -> ContentState -> Store<ContentState, ContentAction> =
+        fun context state ->
             {
                 Reducers = [
                     fun state action ->
                         match action with
-                        | UpdateBigCraftablesContentAction(originalContent) -> ContentInternal.UpdateBigCraftablesContentActionReducer state originalContent
-                        | UpdateBigCraftableTextureContentAction(name, texture) -> ContentInternal.UpdateBigCraftableTextureContentAction state (name, texture)
+                        | UpdateBigCraftableIdsAction(originalContent) -> ContentInternal.UpdateBigCraftableIdsActionReducer state originalContent
+                        | UpdateBigCraftableTextureContentAction(name, texture) -> ContentInternal.UpdateBigCraftableTextureContentActionReducer state (name, texture)
                 ]
                 Middlewares = [
                     Store.LoggerMiddleware "dataStore" context.monitor.Log
                 ]
-                State = context.state
+                State = state
             }

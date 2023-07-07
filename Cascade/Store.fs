@@ -34,7 +34,7 @@ module Store =
     let LoggerMiddleware<'s, 'a> (tag: string) (outputSink: string -> unit): Middleware<'s, 'a> =
         fun state next action ->
             let newState = next action
-            do outputSink $"[{tag}/{action}] {state} -> {newState}"
+            do outputSink $"[{tag}] State change \n\tAction: {action} \n\tOld state: {state} \n\t======> \n\t{newState}"
             newState
     
     let Chain<'s, 't, 'a> (intermediateStore: Store<'s, 'a>) (targetStore: Store<'t, 's>): Store<'t, 'a> =
@@ -76,3 +76,17 @@ module Store =
                 |> List.reduce combiner
             )
         }
+    
+    let Mutate<'s, 'a> (action: 'a) (store: Store<'s, 'a>): Store<'s, 'a> =
+        {
+            store
+            with State = store.Dispatch action
+        }
+    
+    let Empty<'s, 'a> (initialState: 's): Store<'s, 'a> =
+        {
+            Reducers = []
+            Middlewares = []
+            State = initialState
+        }
+    

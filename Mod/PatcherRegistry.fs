@@ -8,7 +8,7 @@ open Microsoft.Xna.Framework
 open StardewModdingAPI
 
 type PatcherResult =
-    | PatchDataBigCraftablesInformation of BigCraftable list
+    | PatchDataBigCraftablesInformation of (string * int option) list
     | PatchDataCraftingRecipes of CraftingRecipe list
     | PatchTileSheetsCraftables of unit
 
@@ -50,7 +50,13 @@ module Patcher =
                             )
                      )
                      |> Railway.sequenceR
-                     |> Railway.mapR PatchDataBigCraftablesInformation
+                     |> Railway.mapR (
+                         fun bigCraftables ->
+                             PatchDataBigCraftablesInformation (
+                                 bigCraftables
+                                 |> List.map (fun bigCraftable -> bigCraftable.Name, bigCraftable.GameId)
+                             )
+                     )
             )
             (
                 "Data/CraftingRecipes",

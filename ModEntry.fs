@@ -11,11 +11,14 @@ open Computers.Mod
 
 type public ModEntry() =
     inherit Mod()
-    
-    member this.contentStore: Store<ContentState, ContentAction> ref =
-        ref (Content.Store {
-            monitor = this.Monitor
-            state = {
+        
+    override this.Entry (helper: IModHelper) =
+        let mutable contentStore =
+            Content.Store
+            <| {
+                monitor = this.Monitor
+            }
+            <| {
                 bigCraftableStorage = [
                     {
                        GameId = None
@@ -46,24 +49,28 @@ type public ModEntry() =
                    }
                 ]
             }
-        })
-    
-    member this.patcher = Patcher.Registry { monitor = this.Monitor }
         
-    member this.interactor = Interaction.Registry { monitor = this.Monitor }
+        let mutable patcher =
+            Patcher.Registry
+            <| {
+                monitor = this.Monitor
+            }
         
-    
-    override this.Entry (helper: IModHelper) =
-        do this.contentStore.Value <- {
-            this.contentStore.Value
-            with State = this.contentStore.Value
-                .Dispatch (UpdateBigCraftableTextureContentAction(
-                    "Computer",
-                    helper
-                        .ModContent
-                        .Load<Texture2D>("assets/computer.png")
-               ))
-        }
+        let mutable interactor =
+            Interaction.Registry
+            <| {
+                monitor = this.Monitor
+            }
+        
+        do contentStore <- contentStore
+        |> Store.Mutate (
+            UpdateBigCraftableTextureContentAction(
+                "Computer",
+                helper
+                    .ModContent
+                    .Load<Texture2D>("assets/computer.png")
+            )
+        )
         
         do helper
             .Events
@@ -71,25 +78,24 @@ type public ModEntry() =
             .AssetRequested
             .AddHandler (
                 fun (_: _) (args: AssetRequestedEventArgs) ->
-                    this.patcher
+                    patcher
                     |> Registry.Pick (fun name -> args.Name.IsEquivalentTo(name))
                     |> Option.iter (
                         fun patcher ->
                             args.Edit (
                                 fun data ->
-                                    match (patcher this.contentStore.Value.State data) with
+                                    match (patcher contentStore.State data) with
                                     | Failure(messages) -> failwith (String.Join "\n" messages)
                                     | Success(result, messages) ->
                                         match result with
                                         | PatchDataBigCraftablesInformation(bigCraftablesInformation) ->
                                             do this.Monitor.Log (String.Join "\n" (messages @ ["Big craftables patched"]))
-                                            do this.contentStore.Value <- {
-                                                this.contentStore.Value
-                                                with State = this.contentStore.Value
-                                                    .Dispatch (UpdateBigCraftablesContentAction(bigCraftablesInformation))
-                                            }
+                                            do contentStore <- contentStore
+                                            |> Store.Mutate (
+                                                UpdateBigCraftableIdsAction(bigCraftablesInformation)
+                                            )
                                             
-                                        | PatchDataCraftingRecipes(_) ->
+                                        | PatchDataCraftingRecipes _ ->
                                             do this.Monitor.Log (String.Join "\n" (messages @ ["Crafting recipes patched"]))
                                         
                                         | PatchTileSheetsCraftables() ->
@@ -113,7 +119,7 @@ type public ModEntry() =
                     
                     do if shouldHandleInteraction then (
                         let currentSelectedObject = StardewValley.Game1.currentLocation.objects[args.Cursor.Tile]
-                        this.interactor
+                        interactor
                         |> Registry.Find currentSelectedObject.Name
                         |> Option.iter (
                             fun object ->
@@ -121,7 +127,7 @@ type public ModEntry() =
                         )
                     )
             )
-        
+
         // Enforce loading Data/BigCraftablesInformation before TileSheets/Craftables
         do helper
             .GameContent
