@@ -166,10 +166,19 @@ module Railway =
                 results
                 (Success ([], []))
     
+    /// try a function and return a RailwayResult of the result
     let tryR: (unit -> 'TSuccess) -> RailwayResult<'TSuccess, string> =
         fun f ->
             try
                 f () |> succeed
             with
             | ex -> fail (ex |> sprintf "%A")
+    
+    
+    
+    /// given two RailwayResults, combine them into a RailwayResult of a tuple
+    let combineR: RailwayResult<'TSuccessA, 'TMessage> -> RailwayResult<'TSuccessB, 'TMessage> -> RailwayResult<'TSuccessA * 'TSuccessB, 'TMessage> =
+        fun result1 result2 ->
+            let f x y = (x, y)
+            lift2R f result1 result2
     

@@ -1,6 +1,5 @@
 namespace Computers.Mod
 
-open System.Collections.Generic
 open Computers.Utils
 open Computers.Cascade
 open Computers.Game
@@ -13,12 +12,12 @@ type ContentState =
         craftingRecipeStorage: CraftingRecipe list
     }
     
-type UpdateBigCraftableIdsContentAction = IDictionary<int, string>
+type UpdateBigCraftablesContentAction = BigCraftable list
 
 type UpdateBigCraftableTextureContentAction = string * Texture2D
     
 type ContentAction =
-    | UpdateBigCraftableIdsContentAction of UpdateBigCraftableIdsContentAction
+    | UpdateBigCraftablesContentAction of UpdateBigCraftablesContentAction
     | UpdateBigCraftableTextureContentAction of UpdateBigCraftableTextureContentAction
 
 type ContentContext =
@@ -28,28 +27,11 @@ type ContentContext =
     }
 
 module private ContentInternal =
-    let UpdateBigCraftableIdsContentActionReducer: Reducer<ContentState, UpdateBigCraftableIdsContentAction> =
+    let UpdateBigCraftablesContentActionReducer: Reducer<ContentState, UpdateBigCraftablesContentAction> =
         fun state originalContent ->
-            let bigCraftableLatestId = (
-                originalContent.Keys
-                |> seq
-                |> Seq.max
-                |> (+) 1
-            )
-            
             {
                 state
-                with bigCraftableStorage = (
-                    state.bigCraftableStorage
-                    |> List.indexed
-                    |> List.map (
-                        fun (index, bigCraftable) ->
-                            {
-                                bigCraftable
-                                with GameId = Some (bigCraftableLatestId + index)
-                            }
-                    )
-                )
+                with bigCraftableStorage = originalContent
             }
 
     let UpdateBigCraftableTextureContentAction = 
@@ -80,7 +62,7 @@ module Content =
                 Reducers = [
                     fun state action ->
                         match action with
-                        | UpdateBigCraftableIdsContentAction(originalContent) -> ContentInternal.UpdateBigCraftableIdsContentActionReducer state originalContent
+                        | UpdateBigCraftablesContentAction(originalContent) -> ContentInternal.UpdateBigCraftablesContentActionReducer state originalContent
                         | UpdateBigCraftableTextureContentAction(name, texture) -> ContentInternal.UpdateBigCraftableTextureContentAction state (name, texture)
                 ]
                 Middlewares = [

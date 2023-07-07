@@ -75,7 +75,26 @@ type public ModEntry() =
                     |> Registry.Pick (fun name -> args.Name.IsEquivalentTo(name))
                     |> Option.iter (
                         fun patcher ->
-                            args.Edit (patcher this.contentStore.Value)
+                            args.Edit (
+                                fun data ->
+                                    match (patcher this.contentStore.Value.State data) with
+                                    | Failure(messages) -> failwith (String.Join "\n" messages)
+                                    | Success(result, messages) ->
+                                        match result with
+                                        | PatchDataBigCraftablesInformation(bigCraftablesInformation) ->
+                                            do this.Monitor.Log (String.Join "\n" (messages @ ["Big craftables patched"]))
+                                            do this.contentStore.Value <- {
+                                                this.contentStore.Value
+                                                with State = this.contentStore.Value
+                                                    .Dispatch (UpdateBigCraftablesContentAction(bigCraftablesInformation))
+                                            }
+                                            
+                                        | PatchDataCraftingRecipes(_) ->
+                                            do this.Monitor.Log (String.Join "\n" (messages @ ["Crafting recipes patched"]))
+                                        
+                                        | PatchTileSheetsCraftables() ->
+                                            do this.Monitor.Log (String.Join "\n" (messages @ ["Tile sheet patched"]))
+                            )
                     )
             )
             
